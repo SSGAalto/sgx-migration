@@ -1,0 +1,6 @@
+#prevent key leaks
+*.pem
+
+
+*.o
+*.a

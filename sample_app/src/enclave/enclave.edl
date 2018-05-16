@@ -1,0 +1,58 @@
+/* Copyright (c) 2018 Aalto University
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/* sample enclave.edl - Top EDL file. */
+
+enclave {
+    from "lib_migration.edl" import *;
+    include "stdbool.h"
+
+    untrusted {
+    };
+
+
+    trusted {
+          public void ecall_test_seal_unseal();
+          public uint8_t ecall_test_create_counter(uint32_t initial_value);
+          public bool ecall_test_counter(uint8_t id, uint32_t expected_value);
+          public bool ecall_delete_counter(uint8_t id);
+
+          public uint8_t ecall_create_counter();
+          public uint32_t ecall_increase_counter(uint8_t id);
+          public uint32_t ecall_read_counter(uint8_t id);
+    	    public void ecall_fast_destroy_counter(uint8_t id);
+
+          public bool ecall_init_session();
+          public bool ecall_destroy_session();
+
+          public uint32_t ecall_get_required_size(uint32_t add_mac_txt_size, uint32_t txt_encrypt_size);
+    	    
+          public uint32_t ecall_seal(
+                uint32_t additional_MACtext_length,
+                [in, size=additional_MACtext_length] uint8_t *p_additional_MACtext,
+                uint32_t text2encrypt_length,
+                [in, size=text2encrypt_length] uint8_t *p_text2encrypt,
+                uint32_t sealed_data_size,
+                [out, size=sealed_data_size] void *p_sealed_data);
+          public uint32_t ecall_unseal(
+    	        [in, size=sealed_data_size] void *p_sealed_data,
+                uint32_t sealed_data_size,
+                [out, size=additional_MACtext_length] uint8_t *p_additional_MACtext,
+                uint32_t additional_MACtext_length,
+                [out, size=decrypted_text_length] uint8_t *p_decrypted_text,
+                uint32_t decrypted_text_length);
+
+    };
+};

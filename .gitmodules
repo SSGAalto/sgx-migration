@@ -1,0 +1,3 @@
+[submodule "sgx-utils"]
+	path = sgx-utils
+	url = https://github.com/SSGAalto/sgx-utils
