@@ -1,3 +1,11 @@
+#all:
+#   $(MAKE) -f sgx_u.mk all
+#   $(MAKE) -f sgx_t.mk all
+#
+#clean:
+#   $(MAKE) -f sgx_u.mk clean
+#   $(MAKE) -f sgx_t.mk clean
+
 #
 # Copyright (C) 2011-2016 Intel Corporation. All rights reserved.
 #
@@ -27,20 +35,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-
-# Copyright (c) 2018 Aalto University
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#  http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
 
 ######## SGX SDK Settings ########
 
@@ -95,9 +90,16 @@ IncludeFolder := ../include
 
 Lib_Dir := ../libs
 Utils_Dir := ../sgx-utils/libs
+Lib_NrtTke := $(Utils_Dir)/lib_tke
+Lib_NrtUke := $(Utils_Dir)/lib_uke
+Lib_NrtRa := $(Utils_Dir)/lib_nrt_ra
 Lib_La := $(Utils_Dir)/lib_la
+Lib_Net := $(Utils_Dir)/lib_net
 Lib_Migration := $(Lib_Dir)/lib_migration
 
+NrtTke_Link := -L$(Lib_NrtTke) -lnrt_tke
+NrtUke_Link := -L$(Lib_NrtUke) -lnrt_uke
+NrtRa_Link := -L$(Lib_NrtRa) -lnrt_ra
 LATrusted_Link := -L$(Lib_La) -ltla
 LAUnTrusted_Link := -L$(Lib_La) -lula
 MigrationTrusted_Link := -L$(Lib_Migration) -lmigration
@@ -107,11 +109,11 @@ MigrationTrusted_Link := -L$(Lib_Migration) -lmigration
 GeneratedTrusted := ./generated
 GeneratedUntrusted := ./generated
 # EDL Filename without extension!
-EdlFilename := enclave
+EdlFilename := migration_enclave 
 
 # Folder of the app and enclave code (All cpp code in here gets linked)
-App_Folder := ./src/app
-Enclave_Folder := ./src/enclave
+App_Folder := ./untrusted
+Enclave_Folder := ./trusted
 
 # Default config name is <edlname>.config.xml residing in the trusted folder of the project -- Adjust this if you need
 Enclave_Config_File := $(Enclave_Folder)/$(EdlFilename:=.config.xml)
@@ -123,27 +125,30 @@ Enclave_Key_File := $(Enclave_Folder)/$(EdlFilename:=_private.pem)
 Enclave_Lds_File := $(Enclave_Folder)/$(EdlFilename:=.lds)
 
 # Common include folders for both trusted and untrusted part
-CommonIncludes := -I$(IncludeFolder) -I$(Lib_La) -I$(Lib_Migration)/trusted
+CommonIncludes := -I$(IncludeFolder) -I$(Lib_La)
 
 # Compile name of the app
-App_Name := app
+App_Name := me_app
 # Additional Include directories for app (add as "-Ifile")
-App_Includes := -I$(GeneratedUntrusted)
+App_Includes := -I$(GeneratedUntrusted) -I$(Lib_NrtTke) -I$(Lib_NrtRa) -I$(Lib_Net)/src \
+	-I$(Lib_Migration)/trusted
 # Additional Libraries for app (add as -L or -l respectively)
-App_Libraries := $(LAUnTrusted_Link) -lboost_system -lboost_program_options
+App_Libraries := $(LAUnTrusted_Link) $(NrtRa_Link) $(NrtUke_Link) \
+	-lboost_system -lboost_program_options -lcurl
+AppAdditionalCppFiles := 
 
 # Same for enclave 
-Enclave_Name := enclave.so
-Signed_Enclave_Name := enclave.signed.so
-Enclave_Includes := -I$(GeneratedTrusted)
-Enclave_Libraries := $(LATrusted_Link) $(MigrationTrusted_Link)
+Enclave_Name := migration_enclave.so
+Signed_Enclave_Name := migration_enclave.signed.so
+Enclave_Includes := -I$(Lib_La)/trusted -I$(GeneratedTrusted) -I$(Lib_NrtTke) -I$(Lib_Migration)/trusted
+Enclave_Libraries := $(LATrusted_Link) $(NrtTke_Link) $(MigrationTrusted_Link)
 
 
 ##############################
 ######## App settings ########
 ##############################
 # Theoretically, this should not require any adjustments (as long as all cpp files are in the app folder)
-App_Cpp_Files := $(wildcard $(App_Folder)/*.cpp)
+App_Cpp_Files := $(wildcard $(App_Folder)/*.cpp) $(AppAdditionalCppFiles)
 App_Cpp_Objects := $(App_Cpp_Files:.cpp=.o)
 App_C_Flags := $(SGX_COMMON_CFLAGS) -fPIC -Wno-attributes -I$(SGX_SDK)/include $(App_Includes) $(CommonIncludes)
 
@@ -247,12 +252,12 @@ endif
 
 
 ######## Edger8r #########
-$(GeneratedUntrusted)/$(EdlFilename:=_u.c) $(GeneratedTrusted)/$(EdlFilename:=_t.c): $(SGX_EDGER8R) $(Enclave_Folder)/$(EdlFilename:=.edl)
+$(GeneratedUntrusted)/$(EdlFilename:=_u.c) $(GeneratedTrusted)/$(EdlFilename:=_t.c): $(SGX_EDGER8R) $(EdlFilename:=.edl)
 	$(SGX_EDGER8R) $(EdlFilename:=.edl) \
 		--search-path $(App_Folder) \
 		--search-path $(Enclave_Folder) \
+		--search-path $(Lib_NrtTke) \
 		--search-path $(Lib_La) \
-		--search-path $(Lib_Migration) \
 		--search-path $(SGX_SDK)/include \
 		--trusted-dir $(GeneratedTrusted) \
 		--untrusted-dir $(GeneratedUntrusted)

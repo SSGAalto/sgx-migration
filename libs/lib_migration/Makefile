@@ -99,7 +99,7 @@ Crypto_Library_Name := sgx_tcrypto
 # Custom variables
 IncludeFolder := ../../common/include
 
-Lib_Dir := ../
+Lib_Dir := ../../sgx-utils/libs
 Lib_La := $(Lib_Dir)/lib_la
 LATrusted_Link := -L$(Lib_La) -ltla
 LAUnTrusted_Link := -L$(Lib_La) -lula

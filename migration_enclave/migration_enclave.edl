@@ -1,0 +1,22 @@
+/* migration_enclave.edl - Top EDL file. */
+
+enclave {
+    from "nrt_tke.edl" import *;
+    from "la.edl" import *;
+
+    include "nrt_key_exchange.h"
+    include "sgx_key_exchange.h"
+    include "sgx_trts.h"
+
+    trusted {
+        public int ecall_enclave_init_ra(int b_pse, [out] nrt_ra_context_t *p_context);
+        public int ecall_enclave_close_ra(nrt_ra_context_t context);
+
+        public int ecall_get_migration_data(nrt_ra_context_t context,
+                                            uint32_t quote_len,
+                                            [in, size = quote_len] uint8_t *quote,
+                                            uint32_t max_len,
+                                            [out, size = max_len] uint8_t *result,
+                                            [out] uint32_t *res_len);
+    };
+};
