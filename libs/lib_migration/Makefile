@@ -129,7 +129,7 @@ TrustLib_Libraries := $(LATrusted_Link)
 # This Block should be generic enough to not need modification
 TrustLib_Cpp_Files := $(wildcard $(TrustLib_Folder)/*.cpp)
 TrustLib_Cpp_Objects := $(TrustLib_Cpp_Files:.cpp=.o)
-TrustLib_Include_Paths := -I$(SGX_SDK)/include -I$(SGX_SDK)/include/tlibc -I$(SGX_SDK)/include/stlport -I$(SGX_SDK)/include/epid $(CommonIncludes) $(TrustLib_Additional_Includes) -I./$(TrustLib_Folder)
+TrustLib_Include_Paths := -I$(SGX_SDK)/include -I$(SGX_SDK)/include/tlibc -I$(SGX_SDK)/include/libcxx -I$(SGX_SDK)/include/epid $(CommonIncludes) $(TrustLib_Additional_Includes) -I./$(TrustLib_Folder)
 TrustLib_Compile_Flags := $(SGX_COMMON_CFLAGS) -nostdinc -fvisibility=hidden -fpie -fstack-protector  $(TrustLib_Include_Paths)
 TrustLib_Compile_Cxx_Flags :=  -std=c++11 -nostdinc++
 
@@ -144,7 +144,7 @@ TrustLib_Compile_Cxx_Flags :=  -std=c++11 -nostdinc++
 # Otherwise, you may get some undesirable errors.
 Common_Enclave_Link_Flags := $(SGX_COMMON_CFLAGS) -Wl,--no-undefined -nostdlib -nodefaultlibs -nostartfiles -L$(SGX_LIBRARY_PATH) \
 	-Wl,--whole-archive -l$(Trts_Library_Name) -Wl,--no-whole-archive \
-	-Wl,--start-group -lsgx_tstdc -lsgx_tstdcxx -l$(Crypto_Library_Name) -l$(Service_Library_Name) $(TrustLib_Libraries) -Wl,--end-group \
+	-Wl,--start-group -lsgx_tstdc -lsgx_tcxx -l$(Crypto_Library_Name) -l$(Service_Library_Name) $(TrustLib_Libraries) -Wl,--end-group \
 	-Wl,-Bstatic -Wl,-Bsymbolic -Wl,--no-undefined \
 	-Wl,-pie,-eenclave_entry -Wl,--export-dynamic  \
 	-Wl,--defsym,__ImageBase=0
